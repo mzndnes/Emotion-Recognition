@@ -123,3 +123,6 @@ dmypy.json
 .pyre/
 .idea/
 .DS_Store
+emotion/
+images/
+sorted_emotion_set/
