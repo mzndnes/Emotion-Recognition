@@ -126,3 +126,4 @@ dmypy.json
 emotion/
 images/
 sorted_emotion_set/
+filtered_face_dataset/
