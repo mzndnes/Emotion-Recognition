@@ -1,6 +1,7 @@
 import cv2
 import glob
 import random
+import numpy
 
 from shutil import copyfile
 
@@ -18,9 +19,12 @@ class FacialEmotionRecognition:
         self.face_detection_filter_4 = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
         self.filtered_dataset = "filtered_face_dataset"
         self.image_format = "jpg"
+        self.fishface = cv2.face.FisherFaceRecognizer_create()
 
 
     def pre_process_data(self):
+        print("-------Pre-Processing Dataset------")
+
         volunteers = sorted(glob.glob("%s/*" %self.source_emotion))
         for volunteer in volunteers:
             volunteer_id = volunteer[-4:]
@@ -38,6 +42,7 @@ class FacialEmotionRecognition:
 
 
     def filter_faces_from_dataset(self):
+        print("-------Filtering Faces from Dataset------")
 
         for emotion in self.emotions:
 
@@ -80,7 +85,7 @@ class FacialEmotionRecognition:
         files = sorted(glob.glob("%s/%s/*" %(self.sorted_emotion, emotion)))
         random.shuffle(files)
         training_set = files[0:int(len(files)*0.80)]
-        prediction_set = files[-int(len(files)*0.20)]
+        prediction_set = files[-int(len(files)*0.20):]
         return training_set, prediction_set
 
 
@@ -89,13 +94,18 @@ class FacialEmotionRecognition:
         label_set = []
         for item in test_set:
             img = cv2.imread(item)
+            img = cv2.resize(img, (26551,300)
+
+                             )
             img_grayscale = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             data_set.append(img_grayscale)
-            label_set.append(emotion)
+            label_set.append(self.emotions.index(emotion))
         return data_set, label_set
 
 
     def generate_data_and_labels(self):
+        print("-------Generating Training and Prediciton Data from Dataset------")
+
         training_data_set = []
         training_label_set = []
         prediction_data_set = []
@@ -106,18 +116,52 @@ class FacialEmotionRecognition:
             train_set, predict_set = self.train_predict_dataset_split(emotion)
 
             training_data, training_label = self.convert_set_images_to_grayscale_and_append_data_label(train_set, emotion)
-            training_data_set.append(training_data)
-            training_label_set.append(training_label)
+            training_data_set += training_data
+            training_label_set += training_label
 
             prediction_data, prediction_label = self.convert_set_images_to_grayscale_and_append_data_label(predict_set, emotion)
-            prediction_data_set.append(prediction_data)
-            prediction_label_set.append(prediction_label)
+            prediction_data_set += prediction_data
+            prediction_label_set += prediction_label
 
         return training_data_set,training_label_set, prediction_data_set, prediction_label_set
 
 
+    def run_classifier(self):
+
+        training_data, training_label, prediction_data, prediction_label = self.generate_data_and_labels()
+
+        print("-------Training Fisher Face Classifier------")
+        print("Size of training set: %s images" %(len(training_data)))
+
+        self.fishface.train(training_data, numpy.array(training_label))
+
+        print("-------Running Prediction------")
+        print("Size of prediction set: %s images" % (len(prediction_data)))
+
+        correct = 0
+        incorrect = 0
+
+        for ind, img in enumerate(prediction_data):
+            prediction = self.fishface.predict(img)[0]
+            if prediction == prediction_label[ind]:
+                correct += 1
+            else:
+                incorrect += 1
+        return (correct/ (correct + incorrect)) * 100
+
+
 if __name__ == '__main__':
+    number_of_runs = 10
     fer = FacialEmotionRecognition()
     # fer.pre_process_data()
     # fer.filter_faces_from_dataset()
-    fer.generate_data_and_labels()
+
+    accuracy_list = []
+
+    for i in range(number_of_runs):
+        print("\n***********RUN %s*************\n" %(i+1))
+        accuracy = fer.run_classifier()
+        print("Classification Accuracy: %s" %(accuracy))
+        accuracy_list.append(accuracy)
+
+    print("\n*******Total accuracy across %s runs: %s\n" %(number_of_runs, numpy.mean(accuracy_list)))
