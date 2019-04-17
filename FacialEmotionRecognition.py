@@ -1,3 +1,4 @@
+import os
 import cv2
 import glob
 import random
@@ -80,12 +81,22 @@ class FacialEmotionRecognition:
                     except:
                         pass
 
+    def filter_multiple_neutral_faces_per_person(self):
+        files = sorted(glob.glob("%s/%s/*" % (self.sorted_emotion, "neutral")))
+        unique_images = set()
+        for file in files:
+            file_name = file.split("/")[-1].split("_")[0]
+            if file_name in unique_images:
+                os.remove(file)
+            else:
+                unique_images.add(file_name)
+
 
     def train_predict_dataset_split(self, emotion):
         files = sorted(glob.glob("%s/%s/*" %(self.sorted_emotion, emotion)))
         random.shuffle(files)
-        training_set = files[0:int(len(files)*0.80)]
-        prediction_set = files[-int(len(files)*0.20):]
+        training_set = files[0:int(len(files)*0.20)]
+        prediction_set = files[-int(len(files)*0.10):]
         return training_set, prediction_set
 
 
@@ -104,7 +115,7 @@ class FacialEmotionRecognition:
 
 
     def generate_data_and_labels(self):
-        print("-------Generating Training and Prediciton Data from Dataset------")
+        print("-------Generating Training and Prediction Data from Dataset------")
 
         training_data_set = []
         training_label_set = []
@@ -151,10 +162,11 @@ class FacialEmotionRecognition:
 
 
 if __name__ == '__main__':
-    number_of_runs = 10
+    number_of_runs = 1
     fer = FacialEmotionRecognition()
     # fer.pre_process_data()
     # fer.filter_faces_from_dataset()
+    # fer.filter_multiple_neutral_faces_per_person()
 
     accuracy_list = []
 
