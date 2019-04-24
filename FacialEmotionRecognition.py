@@ -36,8 +36,17 @@ class FacialEmotionRecognition:
                     emotion_number = int(float(file.readline()))
                     source_emotion_file = sorted(glob.glob("%s/%s/%s/*" %(self.source_image, volunteer_id, session_id)))[-1]
                     source_neutral_file = sorted(glob.glob("%s/%s/%s/*" %(self.source_image, volunteer_id, session_id)))[0]
-                    dest_neutral_file = "%s/%s/%s" %(self.sorted_emotion, self.neutral, source_neutral_file[16:])
-                    dest_emotion_file = "%s/%s/%s" %(self.sorted_emotion, self.emotions[emotion_number], source_emotion_file[16:])
+
+                    dest_neutral = "%s/%s" %(self.sorted_emotion, self.neutral)
+                    if not os.path.exists(dest_neutral):
+                        os.makedirs(dest_neutral)
+                    dest_neutral_file = "%s/%s" %(dest_neutral, source_neutral_file[16:])
+
+                    dest_emotion = "%s/%s" %(self.sorted_emotion, self.emotions[emotion_number])
+                    if not os.path.exists(dest_emotion):
+                        os.makedirs(dest_emotion)
+                    dest_emotion_file = "%s/%s" %(dest_emotion, source_emotion_file[16:])
+
                     copyfile(source_neutral_file, dest_neutral_file)
                     copyfile(source_emotion_file, dest_emotion_file)
 
@@ -77,7 +86,10 @@ class FacialEmotionRecognition:
                     gray_scale = gray_scale[y:y+h, x:x+w]
                     try:
                         output_image = cv2.resize(gray_scale, (350, 350))
-                        cv2.imwrite("%s/%s/%s.%s" %(self.filtered_dataset, emotion, num, self.image_format), output_image)
+                        dest = "%s/%s" %(self.filtered_dataset, emotion)
+                        if not os.path.exists(dest):
+                            os.makedirs(dest)
+                        cv2.imwrite("%s/%s.%s" %(dest, num, self.image_format), output_image)
                     except:
                         pass
 
@@ -123,6 +135,7 @@ class FacialEmotionRecognition:
         prediction_label_set = []
 
         for emotion in self.emotions:
+            print("-------Generating Training and Prediction Data for %s------", emotion)
 
             train_set, predict_set = self.train_predict_dataset_split(emotion)
 
@@ -164,9 +177,9 @@ class FacialEmotionRecognition:
 if __name__ == '__main__':
     number_of_runs = 1
     fer = FacialEmotionRecognition()
-    # fer.pre_process_data()
-    # fer.filter_faces_from_dataset()
-    # fer.filter_multiple_neutral_faces_per_person()
+    fer.pre_process_data()
+    fer.filter_faces_from_dataset()
+    fer.filter_multiple_neutral_faces_per_person()
 
     accuracy_list = []
 
