@@ -1,15 +1,15 @@
-import os
-import cv2
-import glob
-import random
-import numpy
+import os # operating system
+import cv2 # open-cv package to train/predict
+import glob # read/write file path
+import random # randomize
+import numpy # math package for array, number operations
 
-from shutil import copyfile
+import shutil # copy file operation, remove directory
 
 class FacialEmotionRecognition:
 
     def __init__(self):
-        self.emotions = ["neutral", "anger", "contempt", "disgust", "fear", "happy", "sadness", "surprise"]
+        self.emotions = ["neutral", "anger", "contempt", "disgust", "fear", "happy", "sadness", "surprise"] # list represents array in python
         self.source_emotion = "emotion"
         self.source_image = "images"
         self.neutral = "neutral"
@@ -22,9 +22,13 @@ class FacialEmotionRecognition:
         self.image_format = "jpg"
         self.fishface = cv2.face.FisherFaceRecognizer_create()
 
-
+    # Organize given dataset based on emotion
     def pre_process_data(self):
         print("-------Pre-Processing Dataset------")
+
+        if os.path.exists(self.sorted_emotion):
+            print("%%%%% Removing existing path %s%%%%%" %(self.sorted_emotion))
+            shutil.rmtree(self.sorted_emotion)
 
         volunteers = sorted(glob.glob("%s/*" %self.source_emotion))
         for volunteer in volunteers:
@@ -47,12 +51,27 @@ class FacialEmotionRecognition:
                         os.makedirs(dest_emotion)
                     dest_emotion_file = "%s/%s" %(dest_emotion, source_emotion_file[16:])
 
-                    copyfile(source_neutral_file, dest_neutral_file)
-                    copyfile(source_emotion_file, dest_emotion_file)
+                    shutil.copyfile(source_neutral_file, dest_neutral_file)
+                    shutil.copyfile(source_emotion_file, dest_emotion_file)
+
+
+    def filter_multiple_neutral_faces_per_person(self):
+        files = sorted(glob.glob("%s/%s/*" % (self.sorted_emotion, "neutral")))
+        unique_images = set()
+        for file in files:
+            file_name = file.split("/")[-1].split("_")[0]
+            if file_name in unique_images:
+                os.remove(file)
+            else:
+                unique_images.add(file_name)
 
 
     def filter_faces_from_dataset(self):
         print("-------Filtering Faces from Dataset------")
+
+        if os.path.exists(self.filtered_dataset):
+            print("%%%%% Removing existing path %s%%%%%" %(self.filtered_dataset))
+            shutil.rmtree(self.filtered_dataset)
 
         for emotion in self.emotions:
 
@@ -85,7 +104,7 @@ class FacialEmotionRecognition:
                 for (x, y, w, h) in face_features:
                     gray_scale = gray_scale[y:y+h, x:x+w]
                     try:
-                        output_image = cv2.resize(gray_scale, (350, 350))
+                        output_image = cv2.resize(gray_scale, (26551,300))
                         dest = "%s/%s" %(self.filtered_dataset, emotion)
                         if not os.path.exists(dest):
                             os.makedirs(dest)
@@ -93,35 +112,21 @@ class FacialEmotionRecognition:
                     except:
                         pass
 
-    def filter_multiple_neutral_faces_per_person(self):
-        files = sorted(glob.glob("%s/%s/*" % (self.sorted_emotion, "neutral")))
-        unique_images = set()
-        for file in files:
-            file_name = file.split("/")[-1].split("_")[0]
-            if file_name in unique_images:
-                os.remove(file)
-            else:
-                unique_images.add(file_name)
-
 
     def train_predict_dataset_split(self, emotion):
-        files = sorted(glob.glob("%s/%s/*" %(self.sorted_emotion, emotion)))
+        files = sorted(glob.glob("%s/%s/*" %(self.filtered_dataset, emotion)))
         random.shuffle(files)
-        training_set = files[0:int(len(files)*0.20)]
-        prediction_set = files[-int(len(files)*0.10):]
+        training_set = files[0:int(len(files)*0.01)]
+        prediction_set = files[-int(len(files)*0.001):]
         return training_set, prediction_set
 
 
-    def convert_set_images_to_grayscale_and_append_data_label(self, test_set, emotion):
+    def make_list_of_images_and_data_label(self, test_set, emotion):
         data_set = []
         label_set = []
         for item in test_set:
             img = cv2.imread(item)
-            img = cv2.resize(img, (26551,300)
-
-                             )
-            img_grayscale = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            data_set.append(img_grayscale)
+            data_set.append(img)
             label_set.append(self.emotions.index(emotion))
         return data_set, label_set
 
@@ -139,11 +144,11 @@ class FacialEmotionRecognition:
 
             train_set, predict_set = self.train_predict_dataset_split(emotion)
 
-            training_data, training_label = self.convert_set_images_to_grayscale_and_append_data_label(train_set, emotion)
+            training_data, training_label = self.make_list_of_images_and_data_label(train_set, emotion)
             training_data_set += training_data
             training_label_set += training_label
 
-            prediction_data, prediction_label = self.convert_set_images_to_grayscale_and_append_data_label(predict_set, emotion)
+            prediction_data, prediction_label = self.make_list_of_images_and_data_label(predict_set, emotion)
             prediction_data_set += prediction_data
             prediction_label_set += prediction_label
 
@@ -178,15 +183,19 @@ if __name__ == '__main__':
     number_of_runs = 1
     fer = FacialEmotionRecognition()
     fer.pre_process_data()
+    fer.filter_multiple_neutral_faces_per_person() # efficiency step
     fer.filter_faces_from_dataset()
-    fer.filter_multiple_neutral_faces_per_person()
 
     accuracy_list = []
 
+    file = open("results.txt", 'r')
     for i in range(number_of_runs):
         print("\n***********RUN %s*************\n" %(i+1))
         accuracy = fer.run_classifier()
         print("Classification Accuracy: %s" %(accuracy))
         accuracy_list.append(accuracy)
+        file.write("Run %s accuracy: %s" %(i+1, accuracy))
+    file.write("\nAvg accuracy: %s" %(numpy.mean(accuracy_list)))
+    file.close()
 
     print("\n*******Total accuracy across %s runs: %s\n" %(number_of_runs, numpy.mean(accuracy_list)))
