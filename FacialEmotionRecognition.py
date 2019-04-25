@@ -188,7 +188,7 @@ if __name__ == '__main__':
 
     accuracy_list = []
 
-    file = open("results.txt", 'r')
+    file = open("results.txt", 'w')
     for i in range(number_of_runs):
         print("\n***********RUN %s*************\n" %(i+1))
         accuracy = fer.run_classifier()
