@@ -27,7 +27,7 @@ class FacialEmotionRecognition:
         print("-------Pre-Processing Dataset------")
 
         if os.path.exists(self.sorted_emotion):
-            print("%%%%% Removing existing path %s%%%%%" %(self.sorted_emotion))
+            print("***** Removing existing path %s *****" %(self.sorted_emotion))
             shutil.rmtree(self.sorted_emotion)
 
         volunteers = sorted(glob.glob("%s/*" %self.source_emotion))
@@ -70,7 +70,7 @@ class FacialEmotionRecognition:
         print("-------Filtering Faces from Dataset------")
 
         if os.path.exists(self.filtered_dataset):
-            print("%%%%% Removing existing path %s%%%%%" %(self.filtered_dataset))
+            print("***** Removing existing path %s *****" %(self.filtered_dataset))
             shutil.rmtree(self.filtered_dataset)
 
         for emotion in self.emotions:
