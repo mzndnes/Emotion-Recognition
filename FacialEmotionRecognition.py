@@ -104,7 +104,7 @@ class FacialEmotionRecognition:
                 for (x, y, w, h) in face_features:
                     gray_scale = gray_scale[y:y+h, x:x+w]
                     try:
-                        output_image = cv2.resize(gray_scale, (26551,300))
+                        output_image = cv2.resize(gray_scale, (350,350))
                         dest = "%s/%s" %(self.filtered_dataset, emotion)
                         if not os.path.exists(dest):
                             os.makedirs(dest)
@@ -116,8 +116,8 @@ class FacialEmotionRecognition:
     def train_predict_dataset_split(self, emotion):
         files = sorted(glob.glob("%s/%s/*" %(self.filtered_dataset, emotion)))
         random.shuffle(files)
-        training_set = files[0:int(len(files)*0.01)]
-        prediction_set = files[-int(len(files)*0.001):]
+        training_set = files[0:int(len(files)*0.4)]
+        prediction_set = files[-int(len(files)*0.1):]
         return training_set, prediction_set
 
 
@@ -126,7 +126,9 @@ class FacialEmotionRecognition:
         label_set = []
         for item in test_set:
             img = cv2.imread(item)
-            data_set.append(img)
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            cv2.resize(gray, (26551, 300))
+            data_set.append(gray)
             label_set.append(self.emotions.index(emotion))
         return data_set, label_set
 
