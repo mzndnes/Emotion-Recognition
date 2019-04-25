@@ -24,10 +24,10 @@ class FacialEmotionRecognition:
 
     # Organize given dataset based on emotion
     def pre_process_data(self):
-        print("-------Pre-Processing Dataset------")
+        print("\n-------Pre-Processing Dataset------")
 
         if os.path.exists(self.sorted_emotion):
-            print("***** Removing existing path %s *****" %(self.sorted_emotion))
+            print("\n***** Removing existing path %s *****" %(self.sorted_emotion))
             shutil.rmtree(self.sorted_emotion)
 
         volunteers = sorted(glob.glob("%s/*" %self.source_emotion))
@@ -67,10 +67,10 @@ class FacialEmotionRecognition:
 
 
     def filter_faces_from_dataset(self):
-        print("-------Filtering Faces from Dataset------")
+        print("\n-------Filtering Faces from Dataset------")
 
         if os.path.exists(self.filtered_dataset):
-            print("***** Removing existing path %s *****" %(self.filtered_dataset))
+            print("\n***** Removing existing path %s *****" %(self.filtered_dataset))
             shutil.rmtree(self.filtered_dataset)
 
         for emotion in self.emotions:
@@ -132,7 +132,7 @@ class FacialEmotionRecognition:
 
 
     def generate_data_and_labels(self):
-        print("-------Generating Training and Prediction Data from Dataset------")
+        print("\n-------Generating Training and Prediction Data from Dataset------")
 
         training_data_set = []
         training_label_set = []
@@ -140,7 +140,7 @@ class FacialEmotionRecognition:
         prediction_label_set = []
 
         for emotion in self.emotions:
-            print("-------Generating Training and Prediction Data for %s------", emotion)
+            print("\n-------Generating Training and Prediction Data for %s ------" %emotion)
 
             train_set, predict_set = self.train_predict_dataset_split(emotion)
 
@@ -159,13 +159,13 @@ class FacialEmotionRecognition:
 
         training_data, training_label, prediction_data, prediction_label = self.generate_data_and_labels()
 
-        print("-------Training Fisher Face Classifier------")
-        print("Size of training set: %s images" %(len(training_data)))
+        print("\n-------Training Fisher Face Classifier------")
+        print("\nSize of training set: %s images" %(len(training_data)))
 
         self.fishface.train(training_data, numpy.array(training_label))
 
-        print("-------Running Prediction------")
-        print("Size of prediction set: %s images" % (len(prediction_data)))
+        print("\n-------Running Prediction------")
+        print("\nSize of prediction set: %s images" % (len(prediction_data)))
 
         correct = 0
         incorrect = 0
@@ -192,7 +192,7 @@ if __name__ == '__main__':
     for i in range(number_of_runs):
         print("\n***********RUN %s*************\n" %(i+1))
         accuracy = fer.run_classifier()
-        print("Classification Accuracy: %s" %(accuracy))
+        print("\nClassification Accuracy: %s" %(accuracy))
         accuracy_list.append(accuracy)
         file.write("Run %s accuracy: %s" %(i+1, accuracy))
     file.write("\nAvg accuracy: %s" %(numpy.mean(accuracy_list)))
