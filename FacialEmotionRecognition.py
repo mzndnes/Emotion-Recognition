@@ -1,3 +1,5 @@
+from __future__ import division
+
 import os # operating system
 import cv2 # open-cv package to train/predict
 import glob # read/write file path
@@ -116,8 +118,8 @@ class FacialEmotionRecognition:
     def train_predict_dataset_split(self, emotion):
         files = sorted(glob.glob("%s/%s/*" %(self.filtered_dataset, emotion)))
         random.shuffle(files)
-        training_set = files[0:int(len(files)*0.4)]
-        prediction_set = files[-int(len(files)*0.1):]
+        training_set = files[0:int(len(files)*0.8)]
+        prediction_set = files[-int(len(files)*0.2):]
         return training_set, prediction_set
 
 
